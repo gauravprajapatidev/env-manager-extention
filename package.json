@@ -19,6 +19,14 @@
         "command": "env-manager.open",
         "title": "ENV Manager: Open"
       }
+    ],
+    "keybindings": [
+      {
+        "command": "env-manager.open",
+        "key": "ctrl+shift+e",
+        "mac": "cmd+shift+e",
+        "when": "editorFocus"
+      }
     ]
   },
   "scripts": {
