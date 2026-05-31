@@ -60,16 +60,24 @@ export class EnvPanel {
         if (msg.command === "duplicate") {
           const folders = vscode.workspace.workspaceFolders;
           if (!folders) {
+            vscode.window.showErrorMessage("No workspace folder found");
             return;
           }
-          const targetPath = vscode.Uri.joinPath(
-            folders[0].uri,
-            msg.targetName,
-          );
-          const { writeEnvFile } = require("./EnvParser");
-          writeEnvFile(targetPath.fsPath, msg.variables);
-          vscode.window.showInformationMessage(`✅ Created ${msg.targetName}`);
-          this._refresh();
+          try {
+            const targetPath = vscode.Uri.joinPath(
+              folders[0].uri,
+              msg.targetName,
+            );
+            writeEnvFile(targetPath.fsPath, msg.variables);
+            vscode.window.showInformationMessage(
+              `✅ Created ${msg.targetName}`,
+            );
+            setTimeout(() => this._refresh(), 500);
+          } catch (e) {
+            vscode.window.showErrorMessage(
+              `Failed to create ${msg.targetName}: ${e}`,
+            );
+          }
         }
       },
       null,
@@ -314,17 +322,67 @@ function exportExample() {
 }
 
 function duplicateProfile() {
-  const f = files[activeIndex];
-  const name = prompt('New profile name (e.g. .env.staging):', '.env.staging');
+  const modal = document.createElement('div');
+  modal.id = 'dupModal';
+  modal.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.5);display:flex;align-items:center;justify-content:center;z-index:1000';
+  
+  const box = document.createElement('div');
+  box.style.cssText = 'background:var(--vscode-editor-background);border:1px solid var(--vscode-panel-border);border-radius:8px;padding:20px;width:320px;display:flex;flex-direction:column;gap:12px';
+  
+  const title = document.createElement('div');
+  title.style.cssText = 'font-size:13px;font-weight:500';
+  title.textContent = 'Duplicate Profile';
+  
+  const subtitle = document.createElement('div');
+  subtitle.style.cssText = 'font-size:12px;color:var(--vscode-descriptionForeground)';
+  subtitle.textContent = 'Copying from: ' + files[activeIndex].fileName;
+  
+  const inp = document.createElement('input');
+  inp.id = 'dupInput';
+  inp.className = 'val-input';
+  inp.style.cssText = 'background:var(--vscode-input-background);border:1px solid var(--vscode-input-border);padding:6px 10px;border-radius:4px';
+  inp.placeholder = '.env.staging';
+  inp.value = '.env.staging';
+  
+  const btns = document.createElement('div');
+  btns.style.cssText = 'display:flex;gap:8px;justify-content:flex-end';
+  
+  const cancelBtn = document.createElement('button');
+  cancelBtn.className = 'toolbar-btn';
+  cancelBtn.textContent = 'Cancel';
+  cancelBtn.onclick = () => document.getElementById('dupModal').remove();
+  
+  const createBtn = document.createElement('button');
+  createBtn.className = 'toolbar-btn primary';
+  createBtn.textContent = 'Create';
+  createBtn.onclick = () => confirmDuplicate();
+  
+  btns.appendChild(cancelBtn);
+  btns.appendChild(createBtn);
+  box.appendChild(title);
+  box.appendChild(subtitle);
+  box.appendChild(inp);
+  box.appendChild(btns);
+  modal.appendChild(box);
+  document.body.appendChild(modal);
+  inp.focus();
+  inp.select();
+}
+
+function confirmDuplicate() {
+  const inp = document.getElementById('dupInput');
+  const name = inp ? inp.value.trim() : '';
+  const modal = document.getElementById('dupModal');
+  if (modal) { modal.remove(); }
   if (!name || !name.startsWith('.env')) {
-    alert('Name must start with .env');
+    showToast('Name must start with .env');
     return;
   }
   vscode.postMessage({
     command: 'duplicate',
-    sourcePath: f.filePath,
+    sourcePath: files[activeIndex].filePath,
     targetName: name,
-    variables: f.variables
+    variables: files[activeIndex].variables
   });
 }
 
