@@ -57,6 +57,20 @@ export class EnvPanel {
           );
           vscode.window.showInformationMessage("Exported .env.example");
         }
+        if (msg.command === "duplicate") {
+          const folders = vscode.workspace.workspaceFolders;
+          if (!folders) {
+            return;
+          }
+          const targetPath = vscode.Uri.joinPath(
+            folders[0].uri,
+            msg.targetName,
+          );
+          const { writeEnvFile } = require("./EnvParser");
+          writeEnvFile(targetPath.fsPath, msg.variables);
+          vscode.window.showInformationMessage(`✅ Created ${msg.targetName}`);
+          this._refresh();
+        }
       },
       null,
       this._disposables,
@@ -138,6 +152,7 @@ export class EnvPanel {
 <div class="toolbar">
   <div class="toolbar-title">🔐 ENV Manager <span id="activeBadge" class="active-badge"></span><div class="unsaved-dot" id="unsavedDot"></div></div>
   <button class="toolbar-btn" onclick="doRefresh()">↺ Refresh</button>
+  <button class="toolbar-btn" onclick="duplicateProfile()">⧉ Duplicate</button>
   <button class="toolbar-btn" onclick="exportExample()">⬇ Export</button>
   <button class="toolbar-btn primary" onclick="saveFile()">Save</button>
 </div>
@@ -236,7 +251,10 @@ function renderTable() {
         ? '<span class="secret-mask" onclick="reveal(this,' + i + ')">••••••••••••••••</span>'
         : '<input class="val-input" value="' + esc(v.value) + '" oninput="updateVal(' + i + ',this.value)">') +
       '</td>' +
-      '<td class="action-col"><button class="del-btn" onclick="delRow(' + i + ')">✕</button></td>' +
+      '<td class="action-col" style="width:70px">' +
+      '<button class="del-btn" onclick="copyVal(' + i + ')" title="Copy value">⧉</button>' +
+      '<button class="del-btn" onclick="delRow(' + i + ')">✕</button>' +
+      '</td>' +
       '</tr>';
   }).join('');
   document.getElementById('statusText').textContent =
@@ -295,6 +313,21 @@ function exportExample() {
   vscode.postMessage({ command: 'export', content: f.variables.map(v => v.key + '=').join('\\n'), fileName: '.env.example' });
 }
 
+function duplicateProfile() {
+  const f = files[activeIndex];
+  const name = prompt('New profile name (e.g. .env.staging):', '.env.staging');
+  if (!name || !name.startsWith('.env')) {
+    alert('Name must start with .env');
+    return;
+  }
+  vscode.postMessage({
+    command: 'duplicate',
+    sourcePath: f.filePath,
+    targetName: name,
+    variables: f.variables
+  });
+}
+
 function setFilter(mode, btn) {
   filterMode = mode;
   document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('on'));
@@ -303,6 +336,27 @@ function setFilter(mode, btn) {
 }
 
 function esc(s) { return String(s).replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+
+function copyVal(i) {
+  const v = files[activeIndex].variables[i];
+  navigator.clipboard.writeText(v.value).then(() => {
+    showToast('Copied ' + v.key);
+  });
+}
+
+function showToast(msg) {
+  let t = document.getElementById('toast');
+  if (!t) {
+    t = document.createElement('div');
+    t.id = 'toast';
+    t.style.cssText = 'position:fixed;bottom:40px;left:50%;transform:translateX(-50%);background:var(--vscode-button-background);color:var(--vscode-button-foreground);padding:6px 16px;border-radius:20px;font-size:12px;z-index:999;transition:opacity .3s';
+    document.body.appendChild(t);
+  }
+  t.textContent = msg;
+  t.style.opacity = '1';
+  clearTimeout(t._timer);
+  t._timer = setTimeout(() => t.style.opacity = '0', 1500);
+}
 
 vscode.postMessage({ command: 'ready' });
 </script>

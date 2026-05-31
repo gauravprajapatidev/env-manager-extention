@@ -1,8 +1,9 @@
 {
   "name": "env-manager",
-  "displayName": "env-manager",
-  "description": "Visual .env file manager for VS Code",
+  "displayName": "ENV Manager",
+  "description": "Visual manager for .env files — switch profiles, mask secrets, edit variables",
   "version": "0.0.1",
+  "icon": "images/icon.png",
   "engines": {
     "vscode": "^1.120.0"
   },
@@ -57,5 +58,12 @@
   },
   "dependencies": {
     "dotenv": "^17.4.2"
-  }
+  },
+  "keywords": [
+    "env",
+    "dotenv",
+    "environment",
+    "secrets",
+    "config"
+  ]
 }
