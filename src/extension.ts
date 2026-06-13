@@ -3,7 +3,7 @@ import { EnvPanel } from "./EnvPanel";
 
 export function activate(context: vscode.ExtensionContext) {
   context.subscriptions.push(
-    vscode.commands.registerCommand("env-manager.open", () => {
+    vscode.commands.registerCommand("env-profile-manager.open", () => {
       EnvPanel.createOrShow(context.extensionUri);
     }),
   );

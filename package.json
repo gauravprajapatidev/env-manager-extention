@@ -2,14 +2,17 @@
   "name": "env-profile-manager",
   "displayName": "ENV Profile Manager",
   "description": "Visual manager for .env files — switch profiles, mask secrets, edit variables",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "publisher": "GauravPrajapati",
   "icon": "images/env-manager.png",
   "engines": {
     "vscode": "^1.120.0"
   },
   "categories": [
-    "Other"
+    "Other",
+    "Programming Languages",
+    "Formatters",
+    "Visualization"
   ],
   "activationEvents": [
     "onCommand:env-profile-manager.open"
