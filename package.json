@@ -1,9 +1,10 @@
 {
-  "name": "env-manager",
-  "displayName": "ENV Manager",
+  "name": "env-profile-manager",
+  "displayName": "ENV Profile Manager",
   "description": "Visual manager for .env files — switch profiles, mask secrets, edit variables",
   "version": "0.0.1",
-  "icon": "images/icon.png",
+  "publisher": "GauravPrajapati",
+  "icon": "images/env-manager.png",
   "engines": {
     "vscode": "^1.120.0"
   },
@@ -11,19 +12,19 @@
     "Other"
   ],
   "activationEvents": [
-    "onCommand:env-manager.open"
+    "onCommand:env-profile-manager.open"
   ],
   "main": "./dist/extension.js",
   "contributes": {
     "commands": [
       {
-        "command": "env-manager.open",
-        "title": "ENV Manager: Open"
+        "command": "env-profile-manager.open",
+        "title": "ENV Profile Manager: Open"
       }
     ],
     "keybindings": [
       {
-        "command": "env-manager.open",
+        "command": "env-profile-manager.open",
         "key": "ctrl+shift+e",
         "mac": "cmd+shift+e",
         "when": "editorFocus"
@@ -65,5 +66,14 @@
     "environment",
     "secrets",
     "config"
-  ]
+  ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/gauravprajapatidev/env-manager-extention"
+  },
+  "galleryBanner": {
+    "color": "#1e1e2e",
+    "theme": "dark"
+  },
+  "license": "MIT"
 }
