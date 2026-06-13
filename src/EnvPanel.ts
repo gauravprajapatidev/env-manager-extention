@@ -639,7 +639,7 @@ function updateVal(i, val) { files[activeIndex].variables[i].value = val; markCh
 function delRow(i) { files[activeIndex].variables.splice(i, 1); markChanged(); renderTable(); }
 
 function addRow() {
-  files[activeIndex].variables.push({ key: 'NEW_KEY', value: '', isSecret: false });
+  files[activeIndex].variables.push({ key: '', value: '', isSecret: false });
   markChanged(); renderTable();
   document.querySelector('#tbody tr:last-child input').focus();
 }
