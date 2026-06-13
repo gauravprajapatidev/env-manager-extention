@@ -59,7 +59,10 @@ export function parseEnvFile(filePath: string): EnvVariable[] {
 
 export function writeEnvFile(filePath: string, variables: EnvVariable[]): void {
   const lines = variables.map((v) => {
-    const val = v.value.includes(" ") ? `"${v.value}"` : v.value;
+    let val = v.value.replace(/\\/g, "\\\\").replace(/"/g, '\\"');
+    if (v.value.includes(" ") || v.value.includes("=")) {
+      val = `"${val}"`;
+    }
     return `${v.key}=${val}`;
   });
   fs.writeFileSync(filePath, lines.join("\n") + "\n", "utf-8");

@@ -64,14 +64,22 @@ export class EnvPanel {
             return;
           }
           try {
-            const targetPath = vscode.Uri.joinPath(
-              folders[0].uri,
-              msg.targetName,
-            );
+            const targetName = msg.targetName.trim();
+            if (!targetName || !targetName.startsWith(".env")) {
+              vscode.window.showErrorMessage("File name must start with .env");
+              return;
+            }
+            if (
+              targetName.includes("..") ||
+              targetName.includes("/") ||
+              targetName.includes("\\")
+            ) {
+              vscode.window.showErrorMessage("Invalid file name");
+              return;
+            }
+            const targetPath = vscode.Uri.joinPath(folders[0].uri, targetName);
             writeEnvFile(targetPath.fsPath, msg.variables);
-            vscode.window.showInformationMessage(
-              `✅ Created ${msg.targetName}`,
-            );
+            vscode.window.showInformationMessage(`✅ Created ${targetName}`);
             setTimeout(() => this._refresh(), 500);
           } catch (e) {
             vscode.window.showErrorMessage(
@@ -107,53 +115,373 @@ export class EnvPanel {
   }
 
   private _getHtml(): string {
-    return `<!DOCTYPE html>
+    const html = `<!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="UTF-8">
 <style>
   * { box-sizing: border-box; margin: 0; padding: 0; }
-  body { font-family: var(--vscode-font-family); font-size: 13px; color: var(--vscode-foreground); background: var(--vscode-editor-background); display: flex; flex-direction: column; height: 100vh; overflow: hidden; }
-  .toolbar { display: flex; align-items: center; gap: 8px; padding: 10px 16px; border-bottom: 1px solid var(--vscode-panel-border); flex-shrink: 0; }
-  .toolbar-title { font-size: 14px; font-weight: 500; flex: 1; display: flex; align-items: center; gap: 8px; }
-  .active-badge { font-size: 10px; padding: 2px 8px; border-radius: 20px; font-weight: 500; color: white; }
-  .unsaved-dot { width: 8px; height: 8px; border-radius: 50%; background: #EF9F27; display: none; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
+    font-size: 13px;
+    color: var(--vscode-foreground);
+    background: linear-gradient(135deg, rgba(20,20,30,0.4) 0%, rgba(40,40,60,0.4) 100%);
+    display: flex;
+    flex-direction: column;
+    height: 100vh;
+    overflow: hidden;
+  }
+  .toolbar {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 14px 20px;
+    background: rgba(255, 255, 255, 0.07);
+    backdrop-filter: blur(10px);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    flex-shrink: 0;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+  }
+  .toolbar-title {
+    font-size: 15px;
+    font-weight: 600;
+    flex: 1;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .active-badge {
+    font-size: 11px;
+    padding: 3px 10px;
+    border-radius: 20px;
+    font-weight: 600;
+    color: white;
+    background: rgba(255, 255, 255, 0.15);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+  }
+  .unsaved-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: #fbbf24;
+    display: none;
+    box-shadow: 0 0 8px rgba(251, 191, 36, 0.6);
+  }
   .unsaved-dot.visible { display: block; }
-  .toolbar-btn { background: transparent; color: var(--vscode-foreground); border: 1px solid var(--vscode-panel-border); padding: 4px 12px; border-radius: 4px; cursor: pointer; font-size: 12px; transition: all .15s; }
-  .toolbar-btn:hover { background: var(--vscode-toolbar-hoverBackground); }
-  .toolbar-btn.primary { background: var(--vscode-button-background); color: var(--vscode-button-foreground); border-color: var(--vscode-button-background); }
-  .toolbar-btn.primary:hover { background: var(--vscode-button-hoverBackground); }
-  .profiles { display: flex; gap: 2px; padding: 8px 16px 0; border-bottom: 1px solid var(--vscode-panel-border); flex-shrink: 0; overflow-x: auto; }
-  .profile-tab { display: flex; align-items: center; gap: 6px; padding: 6px 14px; cursor: pointer; border-radius: 6px 6px 0 0; font-size: 12px; border: 1px solid transparent; border-bottom: none; opacity: 0.55; transition: all .15s; white-space: nowrap; background: transparent; color: var(--vscode-foreground); }
-  .profile-tab:hover { opacity: 0.8; }
-  .profile-tab.active { opacity: 1; background: var(--vscode-editor-background); border-color: var(--vscode-panel-border); margin-bottom: -1px; padding-bottom: 7px; }
-  .profile-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
-  .var-count { font-size: 10px; padding: 1px 6px; border-radius: 10px; background: var(--vscode-badge-background); color: var(--vscode-badge-foreground); }
-  .empty-state { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 12px; opacity: 0.5; padding: 40px; text-align: center; font-size: 14px; }
-  .searchbar { display: flex; align-items: center; gap: 8px; padding: 8px 16px; border-bottom: 1px solid var(--vscode-panel-border); flex-shrink: 0; }
-  .searchbar input { flex: 1; background: var(--vscode-input-background); border: 1px solid var(--vscode-input-border); color: var(--vscode-input-foreground); padding: 5px 10px; border-radius: 4px; font-size: 12px; }
-  .searchbar input:focus { outline: 1px solid var(--vscode-focusBorder); }
-  .filter-btn { font-size: 11px; padding: 4px 10px; border-radius: 20px; border: 1px solid var(--vscode-panel-border); background: transparent; color: var(--vscode-foreground); cursor: pointer; opacity: 0.6; transition: all .15s; }
-  .filter-btn.on { opacity: 1; background: var(--vscode-toolbar-hoverBackground); border-color: var(--vscode-focusBorder); }
-  .vars-wrap { flex: 1; overflow-y: auto; }
-  table { width: 100%; border-collapse: collapse; }
-  thead th { text-align: left; padding: 6px 16px; font-size: 10px; font-weight: 500; color: var(--vscode-descriptionForeground); border-bottom: 1px solid var(--vscode-panel-border); text-transform: uppercase; letter-spacing: 0.06em; position: sticky; top: 0; background: var(--vscode-editor-background); z-index: 1; }
-  tbody tr { border-bottom: 1px solid var(--vscode-panel-border); transition: background .1s; }
-  tbody tr:hover { background: var(--vscode-list-hoverBackground); }
-  td { padding: 0 16px; height: 38px; vertical-align: middle; }
-  .key-col { width: 220px; }
-  .val-input { width: 100%; background: transparent; border: none; color: var(--vscode-foreground); font-family: var(--vscode-editor-font-family); font-size: 12px; padding: 4px 6px; border-radius: 3px; }
-  .val-input:focus { outline: 1px solid var(--vscode-focusBorder); background: var(--vscode-input-background); }
-  .secret-mask { font-family: var(--vscode-editor-font-family); font-size: 13px; letter-spacing: 3px; color: var(--vscode-descriptionForeground); cursor: pointer; padding: 4px 6px; border-radius: 3px; display: block; }
-  .secret-mask:hover { background: var(--vscode-toolbar-hoverBackground); }
-  .action-col { width: 40px; text-align: center; }
-  .del-btn { background: transparent; border: none; color: var(--vscode-descriptionForeground); cursor: pointer; font-size: 14px; padding: 4px; border-radius: 3px; opacity: 0; transition: all .15s; }
-  tbody tr:hover .del-btn { opacity: 1; }
-  .del-btn:hover { color: var(--vscode-errorForeground); }
-  .add-row { display: flex; align-items: center; gap: 8px; padding: 10px 16px; cursor: pointer; color: var(--vscode-descriptionForeground); font-size: 12px; border-bottom: 1px solid var(--vscode-panel-border); transition: all .15s; }
-  .add-row:hover { background: var(--vscode-list-hoverBackground); color: var(--vscode-foreground); }
-  .statusbar { display: flex; align-items: center; gap: 10px; padding: 5px 16px; border-top: 1px solid var(--vscode-panel-border); background: var(--vscode-statusBar-background); color: var(--vscode-statusBar-foreground); font-size: 11px; flex-shrink: 0; }
-  .status-dot { width: 6px; height: 6px; border-radius: 50%; }
+  .toolbar-btn {
+    background: rgba(255, 255, 255, 0.1);
+    color: var(--vscode-foreground);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    padding: 6px 14px;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 12px;
+    transition: all 0.3s ease;
+  }
+  .toolbar-btn:hover {
+    background: rgba(255, 255, 255, 0.15);
+    border-color: rgba(255, 255, 255, 0.3);
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
+  }
+  .toolbar-btn.primary {
+    background: linear-gradient(135deg, #60a5fa, #a78bfa);
+    color: white;
+    border-color: transparent;
+  }
+  .toolbar-btn.primary:hover {
+    background: linear-gradient(135deg, #3b82f6, #8b5cf6);
+    box-shadow: 0 4px 20px rgba(96, 165, 250, 0.4);
+  }
+  .profiles {
+    display: flex;
+    gap: 4px;
+    padding: 10px 16px 0;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    flex-shrink: 0;
+    overflow-x: auto;
+    overflow-y: hidden;
+    background: rgba(255, 255, 255, 0.03);
+    scrollbar-width: thin;
+    scrollbar-color: rgba(255, 255, 255, 0.1) transparent;
+  }
+  .profiles::-webkit-scrollbar {
+    height: 4px;
+  }
+  .profiles::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  .profiles::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 2px;
+  }
+  .profiles::-webkit-scrollbar-thumb:hover {
+    background: rgba(255, 255, 255, 0.2);
+  }
+  .profile-tab {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 14px;
+    cursor: pointer;
+    border-radius: 10px 10px 0 0;
+    font-size: 12px;
+    font-weight: 500;
+    border: 1px solid transparent;
+    border-bottom: none;
+    opacity: 0.6;
+    transition: all 0.3s ease;
+    white-space: nowrap;
+    background: rgba(255, 255, 255, 0.05);
+    color: var(--vscode-foreground);
+    flex-shrink: 0;
+  }
+  .profile-tab:hover {
+    opacity: 0.85;
+    background: rgba(255, 255, 255, 0.1);
+  }
+  .profile-tab.active {
+    opacity: 1;
+    background: rgba(255, 255, 255, 0.12);
+    backdrop-filter: blur(10px);
+    border-color: rgba(255, 255, 255, 0.2);
+    margin-bottom: -1px;
+    padding-bottom: 9px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  }
+  .profile-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    flex-shrink: 0;
+    box-shadow: 0 0 6px currentColor;
+  }
+  .var-count {
+    font-size: 10px;
+    padding: 2px 6px;
+    border-radius: 10px;
+    background: rgba(255, 255, 255, 0.2);
+    color: var(--vscode-foreground);
+    font-weight: 600;
+  }
+  .empty-state {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 16px;
+    opacity: 0.5;
+    padding: 40px;
+    text-align: center;
+    font-size: 14px;
+  }
+  .searchbar {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 12px 16px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    flex-shrink: 0;
+    background: rgba(255, 255, 255, 0.04);
+  }
+  .searchbar input {
+    flex: 1;
+    background: rgba(255, 255, 255, 0.08);
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    color: var(--vscode-input-foreground);
+    padding: 7px 12px;
+    border-radius: 8px;
+    font-size: 12px;
+    transition: all 0.3s ease;
+  }
+  .searchbar input::placeholder { color: rgba(255, 255, 255, 0.5); }
+  .searchbar input:focus {
+    outline: none;
+    background: rgba(255, 255, 255, 0.12);
+    border-color: rgba(255, 255, 255, 0.3);
+    box-shadow: 0 0 0 3px rgba(96, 165, 250, 0.1);
+  }
+  .filter-btn {
+    font-size: 11px;
+    padding: 5px 12px;
+    border-radius: 20px;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    background: rgba(255, 255, 255, 0.08);
+    color: var(--vscode-foreground);
+    cursor: pointer;
+    opacity: 0.6;
+    transition: all 0.3s ease;
+  }
+  .filter-btn:hover { opacity: 0.8; }
+  .filter-btn.on {
+    opacity: 1;
+    background: rgba(96, 165, 250, 0.3);
+    border-color: rgba(96, 165, 250, 0.5);
+    color: #60a5fa;
+  }
+  .vars-wrap {
+    flex: 1;
+    overflow-y: auto;
+    overflow-x: hidden;
+    min-width: 0;
+  }
+  .vars-wrap::-webkit-scrollbar {
+    width: 8px;
+  }
+  .vars-wrap::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  .vars-wrap::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 4px;
+  }
+  .vars-wrap::-webkit-scrollbar-thumb:hover {
+    background: rgba(255, 255, 255, 0.2);
+  }
+  table { width: 100%; border-collapse: collapse; table-layout: auto; }
+  thead th {
+    text-align: left;
+    padding: 8px 12px;
+    font-size: 11px;
+    font-weight: 600;
+    color: rgba(255, 255, 255, 0.6);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    position: sticky;
+    top: 0;
+    background: rgba(255, 255, 255, 0.03);
+    z-index: 1;
+  }
+  thead th:first-child { width: 180px; min-width: 180px; }
+  thead th:last-child { width: 100px; min-width: 100px; }
+  tbody tr {
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+    transition: background 0.2s ease;
+  }
+  tbody tr:hover {
+    background: rgba(255, 255, 255, 0.08);
+  }
+  td {
+    padding: 0 12px;
+    height: 40px;
+    vertical-align: middle;
+  }
+  td:first-child { width: 180px; min-width: 180px; }
+  td:last-child { width: 100px; min-width: 100px; }
+  .key-col { width: 180px; min-width: 180px; }
+  .value-col { width: 100%; min-width: 100px; }
+  .val-input {
+    width: 100%;
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    color: var(--vscode-foreground);
+    font-family: 'Monaco', 'Courier New', monospace;
+    font-size: 12px;
+    padding: 6px 8px;
+    border-radius: 6px;
+    transition: all 0.3s ease;
+  }
+  .val-input:focus {
+    outline: none;
+    background: rgba(255, 255, 255, 0.1);
+    border-color: rgba(96, 165, 250, 0.5);
+    box-shadow: 0 0 0 3px rgba(96, 165, 250, 0.1);
+  }
+  .secret-mask {
+    font-family: 'Monaco', 'Courier New', monospace;
+    font-size: 13px;
+    letter-spacing: 3px;
+    color: rgba(255, 255, 255, 0.6);
+    cursor: pointer;
+    padding: 6px 8px;
+    border-radius: 6px;
+    display: block;
+    transition: all 0.3s ease;
+  }
+  .secret-mask:hover {
+    background: rgba(255, 255, 255, 0.1);
+    color: rgba(255, 255, 255, 0.9);
+  }
+  .action-col {
+    width: 75px;
+    text-align: center;
+    gap: 4px;
+    height: 100%;
+  }
+  .action-col-cell{
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    gap: 4px;
+    width: 75px;
+    text-align: center;
+  }
+  .del-btn {
+    background: rgba(255, 255, 255, 0.06);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    color: rgba(255, 255, 255, 0.5);
+    cursor: pointer;
+    font-size: 13px;
+    padding: 6px 8px;
+    border-radius: 6px;
+    opacity: 0;
+    transition: all 0.2s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  tbody tr:hover .del-btn {
+    opacity: 1;
+  }
+  .del-btn:hover {
+    color: white;
+    background: rgba(96, 165, 250, 0.2);
+    border-color: rgba(96, 165, 250, 0.4);
+  }
+  .del-btn.copy:hover {
+    background: rgba(34, 197, 94, 0.2);
+    border-color: rgba(34, 197, 94, 0.4);
+  }
+  .del-btn.delete:hover {
+    color: #ef4444;
+    background: rgba(239, 68, 68, 0.2);
+    border-color: rgba(239, 68, 68, 0.4);
+  }
+  .add-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 12px 16px;
+    cursor: pointer;
+    color: rgba(255, 255, 255, 0.6);
+    font-size: 12px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+    transition: all 0.3s ease;
+    background: rgba(255, 255, 255, 0.03);
+  }
+  .add-row:hover {
+    background: rgba(96, 165, 250, 0.15);
+    color: #60a5fa;
+  }
+  .statusbar {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 8px 16px;
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
+    background: rgba(255, 255, 255, 0.05);
+    color: rgba(255, 255, 255, 0.7);
+    font-size: 11px;
+    flex-shrink: 0;
+  }
+  .status-dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    box-shadow: 0 0 4px currentColor;
+  }
 </style>
 </head>
 <body>
@@ -162,7 +490,7 @@ export class EnvPanel {
   <button class="toolbar-btn" onclick="doRefresh()">↺ Refresh</button>
   <button class="toolbar-btn" onclick="duplicateProfile()">⧉ Duplicate</button>
   <button class="toolbar-btn" onclick="exportExample()">⬇ Export</button>
-  <button class="toolbar-btn primary" onclick="saveFile()">Save</button>
+  <button class="toolbar-btn primary" onclick="saveFile()">💾 Save</button>
 </div>
 <div class="profiles" id="profiles"></div>
 <div id="emptyState" class="empty-state" style="display:none">📭 No .env files found in workspace</div>
@@ -171,10 +499,10 @@ export class EnvPanel {
     <input type="text" placeholder="Search variables..." oninput="renderTable()" id="searchInput">
     <button class="filter-btn on" onclick="setFilter('all',this)">All</button>
     <button class="filter-btn" onclick="setFilter('secret',this)">🔒 Secrets</button>
-    <button class="filter-btn" onclick="setFilter('public',this)">Public</button>
+    <button class="filter-btn" onclick="setFilter('public',this)">🌐 Public</button>
   </div>
   <div class="vars-wrap">
-    <table><thead><tr><th class="key-col">Key</th><th>Value</th><th class="action-col"></th></tr></thead>
+    <table><thead><tr><th class="key-col">Key</th><th class="value-col">Value</th><th class="action-col"></th></tr></thead>
     <tbody id="tbody"></tbody></table>
     <div class="add-row" onclick="addRow()">＋ Add variable</div>
   </div>
@@ -232,7 +560,7 @@ function renderProfiles() {
   el.innerHTML = files.map((f, i) =>
     '<div class="profile-tab' + (i === activeIndex ? ' active' : '') + '" onclick="switchProfile(' + i + ')">' +
     '<div class="profile-dot" style="background:' + colors[i] + '"></div>' +
-    f.fileName +
+    esc(f.fileName) +
     '<span class="var-count">' + f.variables.length + '</span>' +
     '</div>'
   ).join('');
@@ -259,9 +587,9 @@ function renderTable() {
         ? '<span class="secret-mask" onclick="reveal(this,' + i + ')">••••••••••••••••</span>'
         : '<input class="val-input" value="' + esc(v.value) + '" oninput="updateVal(' + i + ',this.value)">') +
       '</td>' +
-      '<td class="action-col" style="width:70px">' +
-      '<button class="del-btn" onclick="copyVal(' + i + ')" title="Copy value">⧉</button>' +
-      '<button class="del-btn" onclick="delRow(' + i + ')">✕</button>' +
+      '<td class="action-col-cell" style="width:70px">' +
+      '<button class="del-btn copy" onclick="copyVal(' + i + ')" title="Copy value">📋</button>' +
+      '<button class="del-btn delete" onclick="delRow(' + i + ')">✕</button>' +
       '</td>' +
       '</tr>';
   }).join('');
@@ -287,7 +615,17 @@ function reveal(el, i) {
   inp.className = 'val-input';
   inp.value = v.value;
   inp.oninput = () => updateVal(i, inp.value);
+  inp.onblur = () => mask(inp, i);
   el.replaceWith(inp); inp.focus();
+}
+
+function mask(el, i) {
+  const v = files[activeIndex].variables[i];
+  const span = document.createElement('span');
+  span.className = 'secret-mask';
+  span.textContent = '••••••••••••••••';
+  span.onclick = () => reveal(span, i);
+  el.replaceWith(span);
 }
 
 function updateKey(i, key) {
@@ -324,39 +662,39 @@ function exportExample() {
 function duplicateProfile() {
   const modal = document.createElement('div');
   modal.id = 'dupModal';
-  modal.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.5);display:flex;align-items:center;justify-content:center;z-index:1000';
-  
+  modal.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.5);backdrop-filter:blur(4px);display:flex;align-items:center;justify-content:center;z-index:1000';
+
   const box = document.createElement('div');
-  box.style.cssText = 'background:var(--vscode-editor-background);border:1px solid var(--vscode-panel-border);border-radius:8px;padding:20px;width:320px;display:flex;flex-direction:column;gap:12px';
-  
+  box.style.cssText = 'background:rgba(255,255,255,0.1);border:1px solid rgba(255,255,255,0.2);backdrop-filter:blur(20px);border-radius:16px;padding:24px;width:340px;display:flex;flex-direction:column;gap:14px;box-shadow:0 8px 32px rgba(0,0,0,0.2)';
+
   const title = document.createElement('div');
-  title.style.cssText = 'font-size:13px;font-weight:500';
+  title.style.cssText = 'font-size:14px;font-weight:600;color:#60a5fa';
   title.textContent = 'Duplicate Profile';
-  
+
   const subtitle = document.createElement('div');
-  subtitle.style.cssText = 'font-size:12px;color:var(--vscode-descriptionForeground)';
+  subtitle.style.cssText = 'font-size:12px;color:rgba(255,255,255,0.7)';
   subtitle.textContent = 'Copying from: ' + files[activeIndex].fileName;
-  
+
   const inp = document.createElement('input');
   inp.id = 'dupInput';
   inp.className = 'val-input';
-  inp.style.cssText = 'background:var(--vscode-input-background);border:1px solid var(--vscode-input-border);padding:6px 10px;border-radius:4px';
+  inp.style.cssText = 'background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.2);padding:8px 12px;border-radius:8px;color:var(--vscode-foreground)';
   inp.placeholder = '.env.staging';
   inp.value = '.env.staging';
-  
+
   const btns = document.createElement('div');
   btns.style.cssText = 'display:flex;gap:8px;justify-content:flex-end';
-  
+
   const cancelBtn = document.createElement('button');
   cancelBtn.className = 'toolbar-btn';
   cancelBtn.textContent = 'Cancel';
   cancelBtn.onclick = () => document.getElementById('dupModal').remove();
-  
+
   const createBtn = document.createElement('button');
   createBtn.className = 'toolbar-btn primary';
   createBtn.textContent = 'Create';
   createBtn.onclick = () => confirmDuplicate();
-  
+
   btns.appendChild(cancelBtn);
   btns.appendChild(createBtn);
   box.appendChild(title);
@@ -407,7 +745,7 @@ function showToast(msg) {
   if (!t) {
     t = document.createElement('div');
     t.id = 'toast';
-    t.style.cssText = 'position:fixed;bottom:40px;left:50%;transform:translateX(-50%);background:var(--vscode-button-background);color:var(--vscode-button-foreground);padding:6px 16px;border-radius:20px;font-size:12px;z-index:999;transition:opacity .3s';
+    t.style.cssText = 'position:fixed;bottom:40px;left:50%;transform:translateX(-50%);background:rgba(96,165,250,0.9);backdrop-filter:blur(10px);color:white;padding:8px 18px;border-radius:24px;font-size:12px;z-index:999;transition:opacity .3s;border:1px solid rgba(255,255,255,0.2);box-shadow:0 4px 16px rgba(96,165,250,0.3)';
     document.body.appendChild(t);
   }
   t.textContent = msg;
@@ -419,6 +757,7 @@ function showToast(msg) {
 vscode.postMessage({ command: 'ready' });
 </script>
 </body></html>`;
+    return html;
   }
 
   public dispose() {
