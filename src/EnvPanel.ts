@@ -13,8 +13,8 @@ export class EnvPanel {
       return;
     }
     const panel = vscode.window.createWebviewPanel(
-      "envManager",
-      "ENV Manager",
+      "envProfileManager",
+      "ENV Profile Manager",
       vscode.ViewColumn.One,
       { enableScripts: true },
     );
@@ -491,7 +491,7 @@ export class EnvPanel {
 </head>
 <body>
 <div class="toolbar">
-  <div class="toolbar-title">🔐 ENV Manager <span id="activeBadge" class="active-badge"></span><div class="unsaved-dot" id="unsavedDot"></div></div>
+  <div class="toolbar-title">🔐 ENV Profile Manager <span id="activeBadge" class="active-badge"></span><div class="unsaved-dot" id="unsavedDot"></div></div>
   <button class="toolbar-btn" onclick="doRefresh()">↺ Refresh</button>
   <button class="toolbar-btn" onclick="duplicateProfile()">⧉ Duplicate</button>
   <button class="toolbar-btn" onclick="exportExample()">⬇ Export</button>

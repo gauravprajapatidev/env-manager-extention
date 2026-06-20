@@ -24,7 +24,7 @@
 
 👉 [Install from VS Code Marketplace](https://marketplace.visualstudio.com/items?itemName=GauravPrajapati.env-profile-manager)
 
-Or search **"ENV Manager"** in VS Code Extensions panel (`Ctrl+Shift+X`)
+Or search **"ENV Profile Manager"** in VS Code Extensions panel (`Ctrl+Shift+X`)
 
 ---
 
@@ -32,7 +32,7 @@ Or search **"ENV Manager"** in VS Code Extensions panel (`Ctrl+Shift+X`)
 
 Open with `Ctrl+Shift+E` (or `Cmd+Shift+E` on Mac)
 
-Or run **`ENV Manager: Open`** from the Command Palette (`Ctrl+Shift+P`)
+Or run **`ENV Profile Manager: Open`** from the Command Palette (`Ctrl+Shift+P`)
 
 ---
 
