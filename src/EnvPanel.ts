@@ -18,6 +18,7 @@ export class EnvPanel {
       vscode.ViewColumn.One,
       { enableScripts: true },
     );
+    panel.iconPath = new vscode.ThemeIcon("layers");
     EnvPanel.currentPanel = new EnvPanel(panel);
   }
 
@@ -325,6 +326,7 @@ export class EnvPanel {
     overflow-y: auto;
     overflow-x: hidden;
     min-width: 0;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
   }
   .vars-wrap::-webkit-scrollbar {
     width: 8px;
@@ -351,8 +353,9 @@ export class EnvPanel {
     letter-spacing: 0.08em;
     position: sticky;
     top: 0;
-    background: rgba(255, 255, 255, 0.03);
-    z-index: 1;
+    background: rgba(255, 255, 255, 0.08);
+    z-index: 10;
+    backdrop-filter: blur(10px);
   }
   thead th:first-child { width: 180px; min-width: 180px; }
   thead th:last-child { width: 100px; min-width: 100px; }
@@ -457,9 +460,11 @@ export class EnvPanel {
     cursor: pointer;
     color: rgba(255, 255, 255, 0.6);
     font-size: 12px;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+    border-bottom: none;
+    border-top: 1px solid rgba(255, 255, 255, 0.05);
     transition: all 0.3s ease;
-    background: rgba(255, 255, 255, 0.03);
+    background: rgba(255, 255, 255, 0.05);
+    flex-shrink: 0;
   }
   .add-row:hover {
     background: rgba(96, 165, 250, 0.15);
@@ -504,8 +509,8 @@ export class EnvPanel {
   <div class="vars-wrap">
     <table><thead><tr><th class="key-col">Key</th><th class="value-col">Value</th><th class="action-col"></th></tr></thead>
     <tbody id="tbody"></tbody></table>
-    <div class="add-row" onclick="addRow()">＋ Add variable</div>
   </div>
+  <div class="add-row" onclick="addRow()">＋ Add variable</div>
 </div>
 <div class="statusbar"><div class="status-dot" id="statusDot" style="background:#1D9E75"></div><span id="statusText">Loading...</span></div>
 
