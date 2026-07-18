@@ -261,9 +261,7 @@ Your support helps fund:
 * 📚 Better documentation
 * 🔧 Long-term maintenance
 
-<a href="https://ko-fi.com/gauravprajapati">
-    <img src="https://ko-fi.com/img/githubbutton_sm.svg" alt="Support me on Ko-fi">
-</a>
+<a href='https://ko-fi.com/gauravprajapati' target='_blank'><img height='36' style='border:0px;height:36px;' src='https://storage.ko-fi.com/cdn/kofi5.png?v=6' border='0' alt='Buy Me a Coffee at ko-fi.com' /></a>
 
 Or visit:
 
