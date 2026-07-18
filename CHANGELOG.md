@@ -1,9 +1,17 @@
-# Change Log
+# Changelog
 
-All notable changes to the "env-manager" extension will be documented in this file.
+All notable changes to **ENV Manager** will be documented in this file.
 
-Check [Keep a Changelog](http://keepachangelog.com/) for recommendations on how to structure this file.
+## [0.0.3] - 2026-06-20
 
-## [Unreleased]
+### Added
 
-- Initial release
+- Initial public release.
+- Multi-profile support for `.env` files.
+- Secret masking.
+- Visual editor.
+- Search and filter.
+- Export `.env.example`.
+- Save changes directly to `.env` files.
+- VS Code Marketplace support.
+- Open VSX support.
